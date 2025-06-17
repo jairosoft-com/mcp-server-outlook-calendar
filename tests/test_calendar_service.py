@@ -14,8 +14,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 try:
     from ms_calendar.calendar_service import fetch_all_calendar_events, get_graph_client
     from msgraph.generated.models import Event, EventCollectionResponse
-except ImportError as e:
-    print(f"Error importing modules: {e}")
+except ImportError:
     raise
 
 # Test functions are being uncommented one by one to identify issues
