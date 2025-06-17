@@ -1,55 +1,84 @@
-# Weather MCP Server
+# Calendar MCP Server
 
-A lightweight FastMCP service exposing National Weather Service alerts and forecasts via simple RPC-style "tools".
+A lightweight FastMCP service for managing calendar events using Microsoft Graph API.
+
+## Features
+
+- Fetch calendar events for a user within a specified date range
+- Support for Microsoft Graph API authentication
+- Simple RPC-style interface for calendar operations
+
+## Prerequisites
+
+- Python 3.13 or higher
+- Azure AD application with appropriate Graph API permissions
+- Service principal credentials (Client ID, Client Secret, Tenant ID)
 
 ## Installation
 
-First, install [uv](https://github.com/astral-sh/uv) (a fast Python package manager) if you don't have it already:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/YourOrg/calendar-mcp-server.git
+   cd calendar-mcp-server
+   ```
 
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv .venv
+   .venv\Scripts\activate  # On Windows
+   # OR
+   source .venv/bin/activate  # On Unix/macOS
+   ```
 
-# Create virtual environment and activate it
-```bash
-uv venv
-source .venv/bin/activate
-```
+3. Install dependencies:
+   ```bash
+   pip install -e ".[dev]"
+   ```
 
-# Install dependencies
-```bash
-uv add "mcp[cli]" httpx
-```
-
-Then install from PyPI:
-
-```bash
-pip install weather-mcp-server
-```
-
-Or install from source for development:
-
-```bash
-git clone https://github.com/YourOrg/weather-mcp-server.git
-cd weather-mcp-server
-pip install -e ".[dev]"
-```
+4. Create a `.env` file in the project root with your Azure AD credentials:
+   ```
+   AZURE_TENANT_ID=your_tenant_id
+   AZURE_CLIENT_ID=your_client_id
+   AZURE_CLIENT_SECRET=your_client_secret
+   USER_ID=target_user_id
+   USER_EMAIL=user@example.com
+   ```
 
 ## Usage
 
-### As a Python library
+### Running the Server
+
+```bash
+python -m ms_calendar.server
+```
+
+### As a Python Library
 
 ```python
-from weather.nws_client import NWSClient
+from ms_calendar.calendar_service import fetch_all_calendar_events, get_graph_client
+from datetime import datetime, timedelta
 import asyncio
 
 async def main():
-    client = NWSClient()
-    alerts = await client.get_alerts("CA")
-    for alert in alerts:
-        print(alert["headline"], alert["event"], alert["severity"])
+    # Get a Graph client
+    graph_client = get_graph_client()
+    
+    # Fetch events for the next 7 days
+    start_date = datetime.utcnow()
+    end_date = start_date + timedelta(days=7)
+    
+    events = await fetch_all_calendar_events(
+        graph_client=graph_client,
+        user_id="user@example.com",
+        start_date=start_date,
+        end_date=end_date
+    )
+    
+    for event in events:
+        print(f"Event: {event.subject} - {event.start.date_time} to {event.end.date_time}")
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ### As a FastMCP server

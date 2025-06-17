@@ -1,7 +1,7 @@
 [project]
-name = "weather-mcp-server"
+name = "calendar-mcp-server"
 version = "0.1.0"
-description = "Weather information MCP server using National Weather Service API"
+description = "Calendar MCP server for managing calendar events and schedules"
 authors = [
     {name = "Your Name", email = "your.email@example.com"},
 ]
@@ -63,4 +63,4 @@ skip_covered = true
 fail_under = 80
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/weather"]
+packages = ["ms_calendar"]

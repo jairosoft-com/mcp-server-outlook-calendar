@@ -15,11 +15,11 @@ from httpx import AsyncClient
 def server_module():
     """Fixture to import the server module dynamically."""
     server_path = os.path.join(
-        os.path.dirname(__file__), "..", "src", "weather", "server.py"
+        os.path.dirname(__file__), "..", "src", "ms_calendar", "server.py"
     )
-    spec = importlib.util.spec_from_file_location("weather.server", server_path)
+    spec = importlib.util.spec_from_file_location("ms_calendar.server", server_path)
     module = importlib.util.module_from_spec(spec)
-    sys.modules["weather.server"] = module
+    sys.modules["ms_calendar.server"] = module
     spec.loader.exec_module(module)
     return module
 
@@ -32,11 +32,11 @@ def mock_httpx_client():
 
 
 @pytest.fixture
-def mock_nws_client():
-    """Fixture to mock NWSClient and its _make_request method."""
-    with patch("src.weather.nws_client.NWSClient") as mock_client:
-        mock_client.return_value._make_request = AsyncMock()
-        yield mock_client
+def mock_graph_client():
+    """Fixture to mock the Microsoft Graph client."""
+    with patch("ms_calendar.calendar_service.get_graph_client") as mock_client:
+        mock_client.return_value = AsyncMock()
+        yield mock_client.return_value
 
 
 @pytest.fixture
