@@ -63,4 +63,4 @@ skip_covered = true
 fail_under = 80
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ms_calendar"]
+packages = ["ms_calendar"]
