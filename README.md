@@ -48,9 +48,41 @@ A lightweight FastMCP service for managing calendar events using Microsoft Graph
 
 ### Running the Server
 
+#### Standard Execution
+
 ```bash
 python -m ms_calendar.server
 ```
+
+#### Running with Claude Desktop (MCP)
+
+To run this server locally with Claude Desktop using MCP (Model Context Protocol):
+
+1. Create an `mcp-config.json` file in your project root with the following content:
+   ```json
+   {
+     "mcpServers": {
+       "weather": {
+         "command": "uv",
+         "args": [
+           "--directory",
+           "D:\\AI Projects\\mcp-server-weather",
+           "run",
+           "main.py"
+         ]
+       }
+     }
+   }
+   ```
+   
+   Note: Update the directory path to match your local project location.
+
+2. Start the MCP server using the configuration:
+   ```bash
+   npx @modelcontextprotocol/cli --config mcp-config.json
+   ```
+
+The server will start and be available for Claude Desktop to connect to.
 
 ### As a Python Library
 

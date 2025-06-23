@@ -1,0 +1,13 @@
+{
+    "mcpServers": {
+      "weather": {
+        "command": "uv",
+        "args":[
+          "--directory",
+          "D:\\AI Projects\\mcp-server-weather",
+          "run",
+          "main.py"
+        ]
+      }
+    }
+  }
