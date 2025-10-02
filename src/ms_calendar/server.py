@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 from datetime import datetime
 import pytz
 from starlette.responses import JSONResponse
@@ -7,6 +7,7 @@ from ms_calendar.calendar_service import fetch_all_calendar_events, get_graph_cl
 
 # Initialize FastMCP server
 mcp = FastMCP("ms_calendar")
+
 
 @mcp.tool()
 async def get_calendar_events_time_specific(
@@ -59,6 +60,7 @@ async def get_calendar_events_time_specific(
         }
     except Exception as e:
         return f"Error fetching events: {e}"
+
 
 @mcp.custom_route("/health", methods=["GET"])
 async def health_check(_):

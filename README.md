@@ -1,33 +1,57 @@
-# Calendar MCP Server
+# Microsoft Calendar MCP Server
 
-A lightweight FastMCP service for managing calendar events using Microsoft Graph API.
+A Model Context Protocol (MCP) server for managing Microsoft Outlook calendar events using Microsoft Graph API. This server provides tools for fetching calendar events within specified date ranges and integrates seamlessly with Claude Desktop, MCP Inspector, and other MCP-compatible clients.
+
+**🚀 Current Status**: Production-ready with dual transport support (stdio and SSE) for maximum compatibility.
 
 ## Features
 
-- Fetch calendar events for a user within a specified date range
-- Support for Microsoft Graph API authentication
-- Simple RPC-style interface for calendar operations
+- 📅 Fetch calendar events for specific users and date ranges
+- 🔐 Secure Microsoft Graph API authentication using Azure AD
+- 🌐 Support for timezone-aware operations
+- 🔧 FastMCP-based server with dual transport support:
+  - **stdio transport**: For Claude Desktop and CLI clients
+  - **SSE transport**: For MCP Inspector and web-based clients
+- 📊 Detailed event information including attendees and metadata
+- 🏥 Health check endpoint for monitoring
 
 ## Prerequisites
 
 - Python 3.13 or higher
-- Azure AD application with appropriate Graph API permissions
+- Azure AD application with appropriate Microsoft Graph API permissions:
+  - `Calendars.Read` or `Calendars.ReadWrite`
+  - `User.Read` (for accessing user information)
 - Service principal credentials (Client ID, Client Secret, Tenant ID)
 
 ## Installation
 
+### Method 1: Using UV (Recommended)
+
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YourOrg/calendar-mcp-server.git
-   cd calendar-mcp-server
+   git clone <repository-url>
+   cd mcp-server-outlook-calendar
+   ```
+
+2. Install dependencies using UV:
+   ```bash
+   uv sync
+   ```
+
+### Method 2: Using pip
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd mcp-server-outlook-calendar
    ```
 
 2. Create and activate a virtual environment:
    ```bash
    python -m venv .venv
-   .venv\Scripts\activate  # On Windows
-   # OR
    source .venv/bin/activate  # On Unix/macOS
+   # OR
+   .venv\Scripts\activate  # On Windows
    ```
 
 3. Install dependencies:
@@ -35,54 +59,80 @@ A lightweight FastMCP service for managing calendar events using Microsoft Graph
    pip install -e ".[dev]"
    ```
 
+### Configuration
+
 4. Create a `.env` file in the project root with your Azure AD credentials:
+   ```env
+   AZURE_TENANT_ID=your_tenant_id_here
+   AZURE_CLIENT_ID=your_client_id_here
+   AZURE_CLIENT_SECRET=your_client_secret_here
    ```
-   AZURE_TENANT_ID=your_tenant_id
-   AZURE_CLIENT_ID=your_client_id
-   AZURE_CLIENT_SECRET=your_client_secret
-   USER_ID=target_user_id
-   USER_EMAIL=user@example.com
+
+5. Test your connection:
+   ```bash
+   # Using UV
+   uv run python test_connection.py
+   
+   # Using pip
+   python test_connection.py
    ```
 
 ## Usage
 
 ### Running the Server
 
-#### Standard Execution
+#### Method 1: SSE Transport (for MCP Inspector)
 
 ```bash
+# Using UV (recommended)
+uv run python main.py
+
+# Using pip
+python main.py
+```
+
+**Server will run on**: `http://0.0.0.0:8000`
+**SSE Endpoint**: `http://0.0.0.0:8000/sse`
+**Health Check**: `http://0.0.0.0:8000/health`
+
+#### Method 2: Stdio Transport (for Claude Desktop)
+
+```bash
+# Using UV
+uv run python -m ms_calendar.server
+
+# Using pip
 python -m ms_calendar.server
 ```
 
 #### Running with Claude Desktop (MCP)
 
-To run this server locally with Claude Desktop using MCP (Model Context Protocol):
+To integrate this server with Claude Desktop using MCP (Model Context Protocol):
 
-1. Create an `mcp-config.json` file in your project root with the following content:
+1. Add the server configuration to your Claude Desktop config file:
+
+   **On macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+   **On Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+
    ```json
    {
      "mcpServers": {
-       "weather": {
-         "command": "uv",
+       "ms-calendar": {
+         "command": "python",
          "args": [
-           "--directory",
-           "D:\\AI Projects\\mcp-server-weather",
-           "run",
-           "main.py"
-         ]
+           "-m", "ms_calendar.server"
+         ],
+         "cwd": "/path/to/your/mcp-server-outlook-calendar"
        }
      }
    }
    ```
    
-   Note: Update the directory path to match your local project location.
+   Note: Update the `cwd` path to match your local project location.
 
-2. Start the MCP server using the configuration:
-   ```bash
-   npx @modelcontextprotocol/cli --config mcp-config.json
-   ```
+2. Restart Claude Desktop to load the new server configuration.
 
-The server will start and be available for Claude Desktop to connect to.
+The server will be available as a tool within Claude Desktop for calendar operations.
 
 ### As a Python Library
 
@@ -113,91 +163,159 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-### As a FastMCP server
+### Running with MCP Inspector
 
-```bash
-weather-mcp-server --transport stdio
-```
+For development and testing, you can use the MCP Inspector with SSE transport:
 
-Or
+1. Start the server in SSE mode:
+   ```bash
+   # Using UV (recommended)
+   uv run python main.py
+   
+   # Using pip
+   python main.py
+   ```
 
-```bash
-uv run main.py
-```
+2. Run the MCP Inspector:
+   ```bash
+   npx @modelcontextprotocol/inspector
+   ```
 
-To run the MCP Inspector:
+3. Configure the inspector:
+   - **Transport Type:** `SSE`
+   - **URL:** `http://127.0.0.1:8000/sse`
+   - The inspector will automatically open in your browser
 
-```bash
-npx @modelcontextprotocol/inspector
-```
-Copy the Session token and the Proxy server address (see example below).
-
-```bash
-Proxy server listening on 127.0.0.1:6277
-Session token: dc7a47f8b6b1a3eede7c507a8d1c9a7f7e6b3ff46c138f8480bbfbae3c45a9e4
-```
-
-Open the MCP Inspector in your browser:http://127.0.0.1:6274, and in the Configuration, paste the values to the following fields below:
-
-```
-Command: uv 
-Argument: run main.py
-Inspector Proxy Address: http://127.0.0.1:6274
-Proxy Session Token: dc7a47f8b6b1a3eede7c507a8d1c9a7f7e6b3ff46c138f8480bbfbae3c45a9e4
-```
+**Note**: The SSE transport is currently marked as deprecated in favor of StreamableHttp, but it remains fully functional for MCP Inspector usage.
 
 ## API Reference
 
-### get_alerts
+### get_calendar_events_time_specific
 
-Fetch formatted weather alerts for a given two-letter US state code.
-
-**Arguments:**
-- `state` (str): Two-letter uppercase state abbreviation (e.g. "CA").
-
-**Returns:**
-- `str`: Formatted alerts separated by `---`, or an error message.
-
-### get_forecast
-
-Fetch formatted weather forecast for a location.
+Fetch calendar events for a user within a specified date range using Microsoft Graph API.
 
 **Arguments:**
-- `latitude` (float): Latitude between -90 and 90.
-- `longitude` (float): Longitude between -180 and 180.
+- `user_id` (str): Microsoft Graph user ID or email address (e.g., "user@example.com")
+- `start` (str): Start date in ISO format (default: "2025-06-16")
+- `end` (str): End date in ISO format (default: "2025-06-16")  
+- `timezone` (str): IANA timezone identifier (default: "Asia/Manila")
 
 **Returns:**
-- `str`: Forecast for up to next 5 periods or an error message.
+- `dict`: JSON object containing:
+  - `count` (int): Number of events found
+  - `events` (list): Array of event objects with:
+    - `id` (str): Event unique identifier
+    - `subject` (str): Event title/subject
+    - `attendees` (list): Array of attendee objects with email, name, and type
+- `str`: Error message if the operation fails
+
+**Example Response:**
+```json
+{
+  "count": 2,
+  "events": [
+    {
+      "id": "AAMkAGI2...",
+      "subject": "Team Meeting",
+      "attendees": [
+        {
+          "email": "john@example.com",
+          "name": "John Doe",
+          "type": "required"
+        }
+      ]
+    }
+  ]
+}
+```
 
 ### /health
 
-Health check endpoint.
+Health check endpoint for monitoring server status.
 
 **HTTP GET** `/health`
 
 **Returns JSON:**
 - `{"status": "ok"}`
 
+## Azure AD Setup
+
+To use this server, you'll need to set up an Azure AD application:
+
+1. **Register an Application:**
+   - Go to [Azure Portal](https://portal.azure.com) → Azure Active Directory → App registrations
+   - Click "New registration"
+   - Provide a name and select account types
+   - Register the application
+
+2. **Configure API Permissions:**
+   - Go to "API permissions" in your app
+   - Add Microsoft Graph permissions:
+     - `Calendars.Read` (to read calendar events)
+     - `User.Read` (to read user information)
+   - Grant admin consent for your organization
+
+3. **Create Client Secret:**
+   - Go to "Certificates & secrets"
+   - Create a new client secret
+   - Copy the secret value (you won't see it again)
+
+4. **Note Application Details:**
+   - Copy the Application (client) ID
+   - Copy the Directory (tenant) ID
+   - Use these in your `.env` file
+
 ## Testing & Coverage
 
-- Tests use `pytest`, `pytest-asyncio`, and `pytest-cov`.
-- Network calls are monkeypatched for isolation in unit tests.
+- Tests use `pytest`, `pytest-asyncio`, and `pytest-cov`
+- Microsoft Graph API calls can be mocked for testing
 - Run all tests with:
-  ```sh
+  ```bash
   pytest
   ```
 - Generate an HTML coverage report with:
-  ```sh
+  ```bash
   pytest --cov=src --cov-report=html
   open htmlcov/index.html
   ```
 
-## Fixtures & Mocking
+## Transport Support
 
-- Test fixtures and monkeypatching are used to mock NWS API responses and isolate tests from network dependencies.
-- See `tests/conftest.py` for reusable fixtures.
+### SSE Transport (Server-Sent Events)
+- **Entry Point**: `main.py`
+- **Port**: 8000 (default)
+- **Use Cases**: MCP Inspector, web-based clients, development/testing
+- **Features**: Real-time communication, HTTP debugging support
+- **Health Check**: `GET /health` returns `{"status": "ok"}`
+
+### Stdio Transport
+- **Entry Point**: `ms_calendar.server` module
+- **Use Cases**: Claude Desktop, CLI clients, production deployments
+- **Features**: Lower overhead, direct process communication
+
+## Development
+
+This project uses modern Python development tools:
+- **Package Manager**: UV (recommended) or pip
+- **Framework**: FastMCP for MCP server implementation
+- **API Client**: Microsoft Graph SDK for calendar access
+- **Authentication**: Azure Identity for secure Azure AD integration
+- **Code Quality**:
+  - **Black** for code formatting (88-char line length)
+  - **Flake8** for linting with custom rules
+  - **MyPy** for strict type checking
+- **Testing**: pytest with asyncio support and coverage reporting
+- **Type Safety**: Full mypy support with `py.typed` marker
+
+## Project Analysis
+
+For a comprehensive technical analysis of this project, including architecture details, security considerations, and performance characteristics, see [ANALYSIS.md](./ANALYSIS.md).
 
 ## References
 
-* [https://medium.com/data-engineering-with-dremio/building-a-basic-mcp-server-with-python-4c34c41031ed](https://medium.com/data-engineering-with-dremio/building-a-basic-mcp-server-with-python-4c34c41031ed)
-* [https://modelcontextprotocol.io/quickstart/server](https://modelcontextprotocol.io/quickstart/server)
+- [Model Context Protocol Documentation](https://modelcontextprotocol.io/quickstart/server)
+- [Microsoft Graph API - Calendar](https://docs.microsoft.com/en-us/graph/api/resources/calendar)
+- [FastMCP Documentation](https://github.com/jlowin/fastmcp)
+- [Azure Identity Python SDK](https://docs.microsoft.com/en-us/python/api/azure-identity/)
+- [UV Package Manager](https://github.com/astral-sh/uv)
+- [MCP Inspector](https://github.com/modelcontextprotocol/inspector)

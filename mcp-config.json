@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "outlook-calendar": {
+      "command": "python",
+      "args": [
+        "/home/sante8wsl/projects/jairosoft/python/mcp-server-outlook-calendar/main.py"
+      ],
+      "cwd": "/home/sante8wsl/projects/jairosoft/python/mcp-server-outlook-calendar",
+      "env": {
+        "PATH": "/home/sante8wsl/projects/jairosoft/python/mcp-server-outlook-calendar/.venv/bin:/usr/bin:/bin"
+      }
+    }
+  }
+}
